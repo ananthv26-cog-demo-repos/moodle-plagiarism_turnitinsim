@@ -100,7 +100,7 @@ test('Priya can see her own score and open the viewer as a learner', async ({ pa
   await expect(viewer.getByTestId('viewer-role')).toHaveText('LEARNER');
 });
 
-test('Priya resubmits a rewritten draft and the score drops', async ({ page }) => {
+test('Priya resubmits a rewritten draft and the score drops', async ({ page, browser }) => {
   const before = (await mock.submissionByTitle('priya-nair-essay.txt'))!;
 
   await login(page, users.priya);
@@ -111,6 +111,8 @@ test('Priya resubmits a rewritten draft and the score drops', async ({ page }) =
   expect(after.id).not.toBe(before.id);
   expect(after.report!.overall_match_percentage).toBeLessThan(before.report!.overall_match_percentage);
 
-  await login(page, users.dana);
-  await expectScore(page, cmid, users.priya.name, after.report!.overall_match_percentage);
+  const instructor = await (await browser.newContext()).newPage();
+  await login(instructor, users.dana);
+  await expectScore(instructor, cmid, users.priya.name, after.report!.overall_match_percentage);
+  await instructor.context().close();
 });

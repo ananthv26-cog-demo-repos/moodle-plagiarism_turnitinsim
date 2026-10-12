@@ -14,6 +14,7 @@ const MOODLE_PUBLIC_URL = (process.env.MOODLE_PUBLIC_URL || 'http://localhost:80
 const MOODLE_INTERNAL_URL = (process.env.MOODLE_INTERNAL_URL || MOODLE_PUBLIC_URL).replace(/\/$/, '');
 const WEBHOOK_DELAY_MS = Number(process.env.WEBHOOK_DELAY_MS || 1500);
 const STATE_FILE = process.env.STATE_FILE || '/data/state.json';
+const API_KEY = process.env.API_KEY || 'northgate-sandbox-key';
 const EULA_VERSION = 'v1beta';
 
 // ---------------------------------------------------------------- state
@@ -215,7 +216,7 @@ const server = http.createServer(async (req, res) => {
   let m;
   if ((m = p.match(/^\/viewer\/([^/]+)\/([^/]+)$/))) {
     const sub = state.submissions[m[1]]; const launch = state.launches[m[2]];
-    if (!sub || !launch) return send(res, 404, page('Not found', '<main><section class="card">Unknown viewer launch.</section></main>'));
+    if (!sub || !launch || launch.submission_id !== sub.id) return send(res, 404, page('Not found', '<main><section class="card">Unknown viewer launch.</section></main>'));
     return send(res, 200, viewerPage(sub, launch));
   }
   if (p === '/__mock/state') return send(res, 200, state);
@@ -225,7 +226,7 @@ const server = http.createServer(async (req, res) => {
 
   // Everything under /api needs a bearer token.
   const auth = req.headers.authorization || '';
-  if (!/^Bearer\s+\S+/.test(auth)) return send(res, 403, { message: 'Missing or invalid API key' });
+  if (auth !== `Bearer ${API_KEY}`) return send(res, 403, { message: 'Missing or invalid API key' });
 
   if (p === '/api/v1/features-enabled') {
     return send(res, 200, {

@@ -18,6 +18,9 @@ export const users = {
 export type User = (typeof users)[keyof typeof users];
 
 export async function login(page: Page, user: User) {
+  // Log the previous user out properly before switching accounts.
+  const sesskey = await page.evaluate(() => (window as any).M?.cfg?.sesskey).catch(() => undefined);
+  if (sesskey) await page.goto(`/login/logout.php?sesskey=${sesskey}`).catch(() => undefined);
   await page.context().clearCookies();
   for (let attempt = 1; attempt <= 3; attempt++) {
     await page.goto('/login/index.php');
@@ -184,7 +187,9 @@ export async function processQueue(expectedTitles: string[], timeoutMs = 30_000)
     const s = await mock.state();
     const subs = expectedTitles.map((t) =>
       Object.values(s.submissions).filter((x) => x.title === t).sort((a, b) => a.created_time.localeCompare(b.created_time)).at(-1));
-    if (subs.every((x) => x && x.report)) return subs as MockSubmission[];
+    const delivered = subs.every((x) => x && x.report && s.requests.some((r) =>
+      r.kind === 'webhook' && r.event === 'SIMILARITY_COMPLETE' && r.status === 200 && r.payload?.submission_id === x.id));
+    if (delivered) return subs as MockSubmission[];
     await new Promise((r) => setTimeout(r, 1000));
   }
   throw new Error(`Timed out waiting for similarity reports for ${expectedTitles.join(', ')}`);

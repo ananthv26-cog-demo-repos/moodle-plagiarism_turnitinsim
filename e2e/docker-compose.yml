@@ -40,8 +40,9 @@ services:
       MOODLE_PUBLIC_URL: http://localhost:8080
       MOODLE_INTERNAL_URL: http://moodle
       WEBHOOK_DELAY_MS: "1500"
+      API_KEY: northgate-sandbox-key
     ports:
-      - "8090:80"
+      - "127.0.0.1:8090:80"
     volumes:
       - ./mock-turnitin:/app:ro
       - mockdata:/data
