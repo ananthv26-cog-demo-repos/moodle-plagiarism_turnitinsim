@@ -1083,7 +1083,8 @@ class plagiarism_turnitinsim_submission {
         // Check if blind marking is on and revealidentities is not set yet.
         $blindon = (!empty($moduledata->blindmarking) && empty($moduledata->revealidentities));
         
-        return $blindon || $turnitinhideidentity;
+        // INT-24415: blind marking is a Moodle grading concern; only the plugin-level setting controls what we send.
+        return (bool) $turnitinhideidentity;
     }
 
     /**

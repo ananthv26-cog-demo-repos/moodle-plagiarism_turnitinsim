@@ -219,7 +219,12 @@ class plagiarism_plugin_turnitinsim extends plagiarism_plugin {
             )->userid;
         }
 
-        $plagiarismfile = plagiarism_turnitinsim_submission::get_submission_details($linkarray);
+        // INT-24402: the grading table calls get_links() once per row, so cache the lookup per activity.
+        static $submissioncache = array();
+        if (!isset($submissioncache[$linkarray['cmid']])) {
+            $submissioncache[$linkarray['cmid']] = plagiarism_turnitinsim_submission::get_submission_details($linkarray);
+        }
+        $plagiarismfile = $submissioncache[$linkarray['cmid']];
         // If this is a preview quiz submission there will be no record in turnitinsim_sub, so don't display any links
         if (empty($plagiarismfile)) {
             return;
@@ -759,6 +764,12 @@ class plagiarism_plugin_turnitinsim extends plagiarism_plugin {
                     $tssubmission->settogenerate(0);
                     $tssubmission->setstatus(TURNITINSIM_SUBMISSION_STATUS_EMPTY_DELETED);
                     $tssubmission->update();
+                    continue;
+                }
+
+                // INT-24388: one report per student per activity is enough; skip files from students who already have one.
+                if ($DB->record_exists('plagiarism_turnitinsim_sub', array('cm' => $cm->id, 'userid' => $author,
+                        'status' => TURNITINSIM_SUBMISSION_STATUS_COMPLETE))) {
                     continue;
                 }
 
