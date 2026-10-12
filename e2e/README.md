@@ -70,3 +70,18 @@ API hosts, so the mock is reachable inside the compose network as
 
 Cron tasks are run the way Moodle would run them
 (`admin/cli/scheduled_task.php` inside the container), not by poking the DB.
+
+## Demo: planted defects
+
+Branch `demo/planted-defects` carries three small, plausible-looking plugin
+changes, each tagged with a fake ticket number. The suite fails on all three;
+the failures read like bug reports:
+
+| Change | What the suite reports |
+|---|---|
+| `lib.php` INT-24402: per-activity cache in `get_links()` | Marcus's row shows Priya's 68% (`instructor sees each student's own similarity score`) |
+| `lib.php` INT-24388: skip files from students who already have a completed report | Priya's rewrite never reaches Turnitin, old score stays (`Priya resubmits ... and the score drops`) |
+| `submission.class.php` INT-24415: ignore Moodle blind marking | `given_name must not be sent under blind marking` (`Leo submits ... without his name`) |
+
+Point Devin at that branch with "the E2E suite is red, find out why and fix
+it" and the recording of the fix is the demo.
