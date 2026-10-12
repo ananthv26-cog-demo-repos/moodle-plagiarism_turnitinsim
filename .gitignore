@@ -1,2 +1,6 @@
 .idea/*
 tests/behat
+e2e/.moodle/
+e2e/playwright/node_modules/
+e2e/playwright/test-results/
+e2e/playwright/playwright-report/

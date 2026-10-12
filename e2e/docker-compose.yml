@@ -1,0 +1,57 @@
+name: tii-e2e
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: moodle
+      POSTGRES_USER: moodle
+      POSTGRES_PASSWORD: moodle
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moodle"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  moodle:
+    image: moodlehq/moodle-php-apache:8.3
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./.moodle:/var/www/html
+      - ..:/var/www/html/plagiarism/turnitinsim
+      - ./moodle/config.php:/var/www/html/config.php:ro
+      - moodledata:/var/www/moodledata
+
+  # Stand-in for Turnitin's TCA API. The plugin only accepts *.tii-sandbox.com /
+  # *.turnitin.com hostnames, so the service is aliased on the compose network.
+  turnitin-mock:
+    image: node:22-bookworm
+    working_dir: /app
+    command: node server.js
+    environment:
+      PORT: "80"
+      PUBLIC_URL: http://localhost:8090
+      MOODLE_PUBLIC_URL: http://localhost:8080
+      MOODLE_INTERNAL_URL: http://moodle
+      WEBHOOK_DELAY_MS: "1500"
+      API_KEY: northgate-sandbox-key
+    ports:
+      - "127.0.0.1:8090:80"
+    volumes:
+      - ./mock-turnitin:/app:ro
+      - mockdata:/data
+    networks:
+      default:
+        aliases:
+          - mock.tii-sandbox.com
+
+volumes:
+  dbdata:
+  moodledata:
+  mockdata:
