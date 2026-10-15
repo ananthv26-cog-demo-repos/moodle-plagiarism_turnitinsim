@@ -219,12 +219,7 @@ class plagiarism_plugin_turnitinsim extends plagiarism_plugin {
             )->userid;
         }
 
-        // INT-24402: the grading table calls get_links() once per row, so cache the lookup per activity.
-        static $submissioncache = array();
-        if (!isset($submissioncache[$linkarray['cmid']])) {
-            $submissioncache[$linkarray['cmid']] = plagiarism_turnitinsim_submission::get_submission_details($linkarray);
-        }
-        $plagiarismfile = $submissioncache[$linkarray['cmid']];
+        $plagiarismfile = plagiarism_turnitinsim_submission::get_submission_details($linkarray);
         // If this is a preview quiz submission there will be no record in turnitinsim_sub, so don't display any links
         if (empty($plagiarismfile)) {
             return;
